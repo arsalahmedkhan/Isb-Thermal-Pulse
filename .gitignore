@@ -1,0 +1,15 @@
+# Ignore the Python virtual environment
+.venv/
+venv/
+ENV/
+
+# Ignore local PyCharm configurations
+.idea/
+
+# Ignore local data storage (This keeps huge satellite arrays off GitHub)
+data/raw/*
+data/processed/*
+
+# Ignore compiled python files
+**/__pycache__/
+*.pyc
