@@ -1,6 +1,6 @@
 """
 Isb-Thermal-Pulse: Main Execution Entrypoint
-Coordinates data ingestion, feature extraction, and model orchestration.
+Coordinates data ingestion, feature extraction, model orchestration, and simulations.
 """
 
 import os
@@ -8,10 +8,11 @@ from config import settings
 from src.data_ingestion import DataIngestionPipeline
 from src.features import FeatureEngineer
 from src.model import ThermalPredictorModel
+from src.simulator import ClimateSimulator
 
 def run_pipeline():
     print("=========================================")
-    print("     STARTING ISB-THERMAL-PULSE COLD RUN ")
+    print("     STARTING ISB-THERMAL-PULSE SYSTEM   ")
     print("=========================================\n")
 
     # 1. Initialize data ingestion
@@ -35,11 +36,20 @@ def run_pipeline():
 
     # 4. Train the AI Brain
     ml_engine = ThermalPredictorModel()
-    ml_engine.train_pipeline(raw_data_path)
-    ml_engine.save_model(settings.PROCESSED_DATA_DIR)
+    # Check if we already have trained weights archived to speed things up
+    model_file = os.path.join(settings.PROCESSED_DATA_DIR, 'thermal_rf_model.pkl')
+    if not os.path.exists(model_file):
+        ml_engine.train_pipeline(raw_data_path)
+        ml_engine.save_model(settings.PROCESSED_DATA_DIR)
+    else:
+        print(f"Found pre-trained model brain weights at {model_file}. Skipping training.")
+
+    # 5. Run Urban Planning "What-If" Simulations
+    simulator = ClimateSimulator(settings.PROCESSED_DATA_DIR)
+    simulator.run_reforestation_simulation()
 
     print("\n=========================================")
-    print("  PIPELINE PROGRESS: AI BRAIN TRAINED & LOADED")
+    print("  SYSTEM EXECUTION COMPLETE: SUCCESS")
     print("=========================================")
 
 if __name__ == "__main__":
