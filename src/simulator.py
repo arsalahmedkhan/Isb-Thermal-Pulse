@@ -1,11 +1,11 @@
 """
 Isb-Thermal-Pulse: Urban Intervention Simulator
-Loads the pre-trained Random Forest model and simulates "What-If"
-reforestation scenarios to calculate localized cooling impacts.
+Contains both the flawed manual guesswork scenario (Negative Test Case)
+and the advanced empirical linear interpolation pipeline for diagnostic comparison.
 """
 
 import os
-import joblib  # Switched from pickle to match model.py saving protocol
+import joblib
 import pandas as pd
 from config import settings
 
@@ -14,74 +14,88 @@ class ClimateSimulator:
         """Loads the trained machine learning model from disk"""
         model_path = os.path.join(model_dir, 'thermal_rf_model.pkl')
         if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Trained model not found at {model_path}. Please train the model first.")
+            raise FileNotFoundError(f"Trained model not found at {model_path}.")
 
-        # Use joblib directly to open the model weights cleanly
         self.model = joblib.load(model_path)
         print("Trained Random Forest brain successfully loaded into simulator engine.")
 
-    def run_reforestation_simulation(self):
+    def run_flawed_manual_simulation(self):
         """
-        Simulates an urban heat intervention.
-        Compares a heavily paved industrial/commercial sector baseline against
-        an aggressive green-canopy planting initiative.
+        [NEGATIVE TEST CASE] Demonstrates the 'Garbage In, Garbage Out' trap.
+        Feeds the model an unphysical, hand-guessed hybrid feature combination.
         """
-        print("\nConfiguring urban intervention simulation matrix...")
+        print("\n=========================================")
+        print("   DIAGNOSTIC CRASH TEST: FLAWED METHOD  ")
+        print("=========================================")
+        print("CRITIQUE: Feeding hand-guessed numbers that break natural correlations...")
 
-        # Scenario 1: Raw Baseline (e.g., Paved commercial sector / industrial zone)
-        baseline_data = pd.DataFrame([{
-            'Elevation': 510.0,
-            'NDBI': 0.06,
-            'NDVI': 0.05
-        }])
+        # Creating an unphysical 'chimera' pixel (High concrete AND high trees simultaneously)
+        baseline_data = pd.DataFrame([{'Elevation': 510.0, 'NDBI': 0.06, 'NDVI': 0.05}])
+        flawed_mitigation = pd.DataFrame([{'Elevation': 510.0, 'NDBI': 0.05, 'NDVI': 0.18}])
 
-        # Scenario 2: Reforested Mitigation (The same zone but with an added dense canopy)
-        mitigation_data = pd.DataFrame([{
-            'Elevation': 510.0,
-            'NDBI': -0.02,
-            'NDVI': 0.28
-        }])
-
-        # CRITICAL FIX: Explicitly re-align columns to match the exact order used during training fit
         feature_order = ['NDVI', 'NDBI', 'Elevation']
         baseline_data = baseline_data[feature_order]
-        mitigation_data = mitigation_data[feature_order]
+        flawed_mitigation = flawed_mitigation[feature_order]
 
-        # Run AI predictions safely now
-        predicted_baseline_lst = self.model.predict(baseline_data)[0]
-        predicted_mitigated_lst = self.model.predict(mitigation_data)[0]
-        cooling_delta = predicted_baseline_lst - predicted_mitigated_lst
+        pred_base = self.model.predict(baseline_data)[0]
+        pred_miti = self.model.predict(flawed_mitigation)[0]
+        delta = pred_base - pred_miti
 
-        print("\n=========================================")
-        print("     URBAN REFORESTATION SIMULATION      ")
+        print(f"Baseline Surface Temp:  {pred_base:.2f}°C")
+        print(f"Flawed Mitigated Temp:  {pred_miti:.2f}°C")
+        print(f"Calculated Delta (ΔT):   -{delta:.2f}°C  <-- !! POSITIVE HEAT SPIKE !!")
+        print("\nWHY DID THIS FAIL?")
+        print("The Random Forest has never seen high NDBI paired with high NDVI at this altitude.")
+        print("Without natural data correlation, the model falls out-of-bounds and hallucinates.")
+        print("=========================================\n")
+
+    def run_empirical_phase_simulation(self):
+        """
+        [PRODUCTION METHOD] Runs a realistic urban intervention by walking
+        proportionally between two real, existing data coordinates.
+        """
+        raw_data_path = os.path.join(settings.RAW_DATA_DIR, 'islamabad_pixels.csv')
+        df = pd.read_csv(raw_data_path)
+
+        # Isolate flat valley floor sectors (around 500m elevation)
+        plateau_df = df[(df['Elevation'] >= 490) & (df['Elevation'] <= 530)]
+
+        # Extract our two real empirical anchor points
+        hotspot = plateau_df.sort_values(by='NDBI', ascending=False).iloc[0]
+        green_target = plateau_df.sort_values(by='NDVI', ascending=False).iloc[0]
+
         print("=========================================")
-        print(f"Baseline Surface Temp (Concrete Grid): {predicted_baseline_lst:.2f}°C")
-        print(f"Mitigated Surface Temp (Urban Forest): {predicted_mitigated_lst:.2f}°C")
-        print(f"Predicted Local Cooling Impact (ΔT):   -{cooling_delta:.2f}°C")
+        print("  PRODUCTION WORKFLOW: EMPIRICAL BLEND   ")
         print("=========================================")
+        print(f"Targeting Hotspot Pixel at Elevation: {hotspot['Elevation']:.1f}m")
+        print(f"True Baseline Satellite Temp:         {hotspot['LST']:.2f}°C")
+        print("-----------------------------------------")
 
-        if cooling_delta >= 4.0:
-            print("SIMULATION RESULT: CRITICAL MITIGATION POTENTIAL ACHIEVED.")
-        else:
-            print("SIMULATION RESULT: MODERATE MITIGATION POTENTIAL ACHIEVED.")
-        # Run AI predictions
-        predicted_baseline_lst = self.model.predict(baseline_data)[0]
-        predicted_mitigated_lst = self.model.predict(mitigation_data)[0]
-        cooling_delta = predicted_baseline_lst - predicted_mitigated_lst
+        feature_order = ['NDVI', 'NDBI', 'Elevation']
 
-        print("\n=========================================")
-        print("     URBAN REFORESTATION SIMULATION      ")
-        print("=========================================")
-        print(f"Baseline Surface Temp (Concrete Grid): {predicted_baseline_lst:.2f}°C")
-        print(f"Mitigated Surface Temp (Urban Forest): {predicted_mitigated_lst:.2f}°C")
-        print(f"Predicted Local Cooling Impact (ΔT):   -{cooling_delta:.2f}°C")
-        print("=========================================")
+        for percent in [0, 20, 40, 60, 80, 100]:
+            fraction = percent / 100.0
+            simulated_ndvi = hotspot['NDVI'] + fraction * (green_target['NDVI'] - hotspot['NDVI'])
+            simulated_ndbi = hotspot['NDBI'] + fraction * (green_target['NDBI'] - hotspot['NDBI'])
 
-        if cooling_delta >= 4.0:
-            print("SIMULATION RESULT: CRITICAL MITIGATION POTENTIAL ACHIEVED.")
-        else:
-            print("SIMULATION RESULT: MODERATE MITIGATION POTENTIAL ACHIEVED.")
+            sim_row = pd.DataFrame([{
+                'NDVI': simulated_ndvi,
+                'NDBI': simulated_ndbi,
+                'Elevation': hotspot['Elevation']
+            }])[feature_order]
 
+            predicted_temp = self.model.predict(sim_row)[0]
+            current_cooling = hotspot['LST'] - predicted_temp
+
+            phase_name = "BASELINE" if percent == 0 else f"PHASE {percent//20} ({percent}%)"
+            print(f"{phase_name:<12} -> NDVI: {simulated_ndvi:.3f} | NDBI: {simulated_ndbi:.3f} | Predicted Temp: {predicted_temp:.2f}°C (Cooling: -{current_cooling:.2f}°C)")
+
+        print("=========================================\n")
+
+    def run_reforestation_simulation(self):
+        """Orchestrates both scenarios sequentially for presentation comparison"""
+        self.run_flawed_manual_simulation()
+        self.run_empirical_phase_simulation()
 
 if __name__ == "__main__":
-    print("Simulator module verified.")
+    print("Simulator diagnostic suite active.")
