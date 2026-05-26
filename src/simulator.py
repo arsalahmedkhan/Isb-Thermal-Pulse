@@ -57,10 +57,7 @@ class ClimateSimulator:
         raw_data_path = os.path.join(settings.RAW_DATA_DIR, 'islamabad_pixels.csv')
         df = pd.read_csv(raw_data_path)
 
-        # Isolate flat valley floor sectors (around 500m elevation)
         plateau_df = df[(df['Elevation'] >= 490) & (df['Elevation'] <= 530)]
-
-        # Extract our two real empirical anchor points
         hotspot = plateau_df.sort_values(by='NDBI', ascending=False).iloc[0]
         green_target = plateau_df.sort_values(by='NDVI', ascending=False).iloc[0]
 
@@ -72,6 +69,11 @@ class ClimateSimulator:
         print("-----------------------------------------")
 
         feature_order = ['NDVI', 'NDBI', 'Elevation']
+
+        # NEW: Initialize lists to store tracking metrics for Matplotlib
+        phase_labels = []
+        temperature_history = []
+        cooling_history = []
 
         for percent in [0, 20, 40, 60, 80, 100]:
             fraction = percent / 100.0
@@ -87,15 +89,29 @@ class ClimateSimulator:
             predicted_temp = self.model.predict(sim_row)[0]
             current_cooling = hotspot['LST'] - predicted_temp
 
-            phase_name = "BASELINE" if percent == 0 else f"PHASE {percent//20} ({percent}%)"
-            print(f"{phase_name:<12} -> NDVI: {simulated_ndvi:.3f} | NDBI: {simulated_ndbi:.3f} | Predicted Temp: {predicted_temp:.2f}°C (Cooling: -{current_cooling:.2f}°C)")
+            # NEW: Append information to arrays on every pass of the loop
+            phase_labels.append(f"{percent}%")
+            temperature_history.append(predicted_temp)
+            # Record cooling delta as a positive number for intuitive charting display
+            cooling_history.append(max(0.0, current_cooling))
+
+            phase_name = "BASELINE" if percent == 0 else f"PHASE {percent // 20} ({percent}%)"
+            print(
+                f"{phase_name:<12} -> NDVI: {simulated_ndvi:.3f} | NDBI: {simulated_ndbi:.3f} | Predicted Temp: {predicted_temp:.2f}°C (Cooling: -{current_cooling:.2f}°C)")
 
         print("=========================================\n")
 
+        hotspot_coords = [hotspot.get('Latitude', 33.6515), hotspot.get('Longitude', 73.0112)]
+        cooling_delta = temperature_history[0] - temperature_history[-1]
+
+        # Return coordinates, single values, AND the history arrays for plotting layers
+        return hotspot_coords, temperature_history[0], temperature_history[
+            -1], cooling_delta, phase_labels, temperature_history, cooling_history
     def run_reforestation_simulation(self):
         """Orchestrates both scenarios sequentially for presentation comparison"""
         self.run_flawed_manual_simulation()
-        self.run_empirical_phase_simulation()
+        # Capture the spatial outputs from the empirical run
+        return self.run_empirical_phase_simulation()
 
 if __name__ == "__main__":
     print("Simulator diagnostic suite active.")

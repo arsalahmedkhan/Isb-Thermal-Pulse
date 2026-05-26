@@ -7,6 +7,7 @@ and elevation datasets for the Islamabad ROI.
 import ee
 import sys
 import os
+import pandas as pd
 
 # Ensure the root directory is in the path for module imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -66,38 +67,61 @@ class DataIngestionPipeline:
 
     def sample_features_to_dataframe(self, feature_stack, roi, num_points=5000):
         """
-        Extracts random spatial points across Islamabad from the cloud feature stack
-        and converts them into a local dataset for tabular machine learning.
+        Samples random points across the region of interest and extracts
+        both physical spectral features AND true geographic coordinates.
         """
-        print(f"Executing stratified spatial sampling ({num_points} points) across Islamabad...")
+        print(f"Sampling {num_points} localized pixel footprints across Islamabad region...")
 
-        # Tell Google to sample points randomly within our Islamabad geometry
-        sampled_points = feature_stack.sample(
+        # Add the pixel coordinate layers to our feature stack
+        coordinates_image = ee.Image.pixelLonLat()
+        complete_stack = feature_stack.addBands(coordinates_image)
+
+        samples = complete_stack.sample(
             region=roi,
-            scale=30,  # Match Landsat's 30-meter resolution
+            scale=30,  # 30-meter ground block scale
             numPixels=num_points,
-            seed=settings.RANDOM_STATE,
-            tileScale=16  # Prevents out-of-memory errors on the cloud server
-        )
+            geometries=False
+        ).getInfo()
 
-        # Pull the data across the network from Google's cloud down to your local PC
-        print("Downloading pixel matrix from cloud to local workspace (this takes a few seconds)...")
-        features_list = sampled_points.getInfo()['features']
+        features_list = []
 
-        # Parse the raw JSON payload into a clean tabular structure
-        rows = []
-        for feat in features_list:
-            props = feat['properties']
-            # Only keep rows that have all features intact (drop null pixels outside border)
-            if all(k in props for k in ['NDVI', 'NDBI', 'Elevation', 'LST']):
-                rows.append(props)
+        if not samples['features']:
+            print("[WARNING] Google Earth Engine returned an empty sample collection!")
+            return pd.DataFrame()
 
-        import pandas as pd
-        df = pd.DataFrame(rows)
-        print(f"Local dataframe generated successfully. Shape: {df.shape}")
+        # Let's read the first feature's keys to be absolutely sure of casing patterns
+        sample_keys = samples['features'][0]['properties'].keys()
+        print(f"DEBUG: Earth Engine property bands detected: {list(sample_keys)}")
+
+        for feature in samples['features']:
+            props = feature['properties']
+
+            # Use case-insensitive lookups to protect against GEE schema alterations
+            row = {}
+            for k, v in props.items():
+                row[k.upper()] = v
+
+            features_list.append({
+                'NDVI': row.get('NDVI'),
+                'NDBI': row.get('NDBI'),
+                'Elevation': row.get('ELEVATION'),
+                'LST': row.get('LST'),
+                'Latitude': row.get('LATITUDE'),
+                'Longitude': row.get('LONGITUDE')
+            })
+
+        df = pd.DataFrame(features_list)
+
+        # Drop rows missing critical variables
+        initial_len = len(df)
+        df = df.dropna()
+        final_len = len(df)
+
+        print(f"Raw sampled records: {initial_len} -> Clean valid records: {final_len}")
+        print(f"Successfully compiled {final_len} true spatial pixel vectors.")
         return df
 
-
+    
 if __name__ == "__main__":
     pipeline = DataIngestionPipeline()
     roi = pipeline.get_islamabad_boundary()

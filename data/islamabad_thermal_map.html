@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_25d739c77ab0048db1ad7e6e99b07f60 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_25d739c77ab0048db1ad7e6e99b07f60" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_25d739c77ab0048db1ad7e6e99b07f60 = L.map(
+                "map_25d739c77ab0048db1ad7e6e99b07f60",
+                {
+                    center: [33.63467595223892, 73.03478431372113],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 14,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_cb9976c25ebd818bf83c71fa170f02e9 = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"https://carto.com/attributions\"\u003eCARTO\u003c/a\u003e",
+  "subdomains": "abcd",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_cb9976c25ebd818bf83c71fa170f02e9.addTo(map_25d739c77ab0048db1ad7e6e99b07f60);
+        
+    
+            var marker_adfcf664d9dac8f331c0ffcbc509664b = L.marker(
+                [33.63467595223892, 73.03478431372113],
+                {
+}
+            ).addTo(map_25d739c77ab0048db1ad7e6e99b07f60);
+        
+    
+            var icon_e605f2de00ff46dd7413799363fa7520 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "darkred",
+  "iconColor": "white",
+  "icon": "cloud",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_1ea5d9eadf0f90d25fbb66b1f1c93c79 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var html_93d7b829a36f29c3f90a9f19e0b1e95d = $(`<div id="html_93d7b829a36f29c3f90a9f19e0b1e95d" style="width: 100.0%; height: 100.0%;">         <div style="font-family: Arial, sans-serif; width: 250px;">             <h4 style="margin: 0 0 10px 0; color: #e74c3c;">2-Kanal Urban Intervention</h4>             <p><b>Location Coordinates:</b> 33.6347, 73.0348</p>             <hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">             <table style="width: 100%; border-collapse: collapse;">                 <tr style="background-color: #f2f2f2;">                     <th style="text-align: left; padding: 4px;">Phase</th>                     <th style="text-align: right; padding: 4px;">Predicted Temp</th>                 </tr>                 <tr>                     <td style="padding: 4px; color: #e74c3c;"><b>Baseline (0%)</b></td>                     <td style="text-align: right; padding: 4px; color: #e74c3c;"><b>44.40°C</b></td>                 </tr>                 <tr>                     <td style="padding: 4px; color: #2ecc71;"><b>Mitigated (100%)</b></td>                     <td style="text-align: right; padding: 4px; color: #2ecc71;"><b>35.77°C</b></td>                 </tr>             </table>             <hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">             <p style="margin: 0; font-weight: bold; color: #2980b9;">                 Local Shading Power (ΔT): -8.64°C             </p>         </div>         </div>`)[0];
+                popup_1ea5d9eadf0f90d25fbb66b1f1c93c79.setContent(html_93d7b829a36f29c3f90a9f19e0b1e95d);
+            
+        
+
+        marker_adfcf664d9dac8f331c0ffcbc509664b.bindPopup(popup_1ea5d9eadf0f90d25fbb66b1f1c93c79)
+        ;
+
+        
+    
+    
+            marker_adfcf664d9dac8f331c0ffcbc509664b.bindTooltip(
+                `<div>
+                     Click to view localized planting intervention timeline
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_adfcf664d9dac8f331c0ffcbc509664b.setIcon(icon_e605f2de00ff46dd7413799363fa7520);
+            
+</script>
+</html>
