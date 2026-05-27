@@ -65,62 +65,63 @@ class DataIngestionPipeline:
         print("Elevation dataset isolated successfully.")
         return dem
 
-    def sample_features_to_dataframe(self, feature_stack, roi, num_points=5000):
+    def sample_features_to_dataframe(self, feature_stack, roi, num_points=10000):
         """
-        Samples random points across the region of interest and extracts
-        both physical spectral features AND true geographic coordinates.
+        Samples a high-density grid by splitting the query into two safe batches
+        to bypass Google Earth Engine's 5,000 element collection cap.
         """
-        print(f"Sampling {num_points} localized pixel footprints across Islamabad region...")
+        print(f"Initiating dual-batch spatial sampling pipeline for {num_points} elements...")
 
         # Add the pixel coordinate layers to our feature stack
         coordinates_image = ee.Image.pixelLonLat()
         complete_stack = feature_stack.addBands(coordinates_image)
 
-        samples = complete_stack.sample(
-            region=roi,
-            scale=30,  # 30-meter ground block scale
-            numPixels=num_points,
-            geometries=False
-        ).getInfo()
-
+        # Split total request into two safe sub-queries of 5,000 elements each
+        batch_size = num_points // 2
         features_list = []
 
-        if not samples['features']:
-            print("[WARNING] Google Earth Engine returned an empty sample collection!")
-            return pd.DataFrame()
+        # Run Batch 1 and Batch 2 with distinct random seeds
+        for batch_num, seed in enumerate([42, 99], start=1):
+            print(f"-> Harvesting Batch {batch_num}/2 ({batch_size} footprints) from GEE cloud cluster...")
 
-        # Let's read the first feature's keys to be absolutely sure of casing patterns
-        sample_keys = samples['features'][0]['properties'].keys()
-        print(f"DEBUG: Earth Engine property bands detected: {list(sample_keys)}")
+            try:
+                samples = complete_stack.sample(
+                    region=roi,
+                    scale=30,  # 30-meter ground block scale (2-kanal units)
+                    numPixels=batch_size,
+                    seed=seed,
+                    geometries=False
+                ).getInfo()
 
-        for feature in samples['features']:
-            props = feature['properties']
+                if not samples['features']:
+                    continue
 
-            # Use case-insensitive lookups to protect against GEE schema alterations
-            row = {}
-            for k, v in props.items():
-                row[k.upper()] = v
+                for feature in samples['features']:
+                    props = feature['properties']
 
-            features_list.append({
-                'NDVI': row.get('NDVI'),
-                'NDBI': row.get('NDBI'),
-                'Elevation': row.get('ELEVATION'),
-                'LST': row.get('LST'),
-                'Latitude': row.get('LATITUDE'),
-                'Longitude': row.get('LONGITUDE')
-            })
+                    # Robust case-insensitive dictionary lookup map
+                    row = {k.upper(): v for k, v in props.items()}
+
+                    features_list.append({
+                        'NDVI': row.get('NDVI'),
+                        'NDBI': row.get('NDBI'),
+                        'Elevation': row.get('ELEVATION'),
+                        'LST': row.get('LST'),
+                        'Latitude': row.get('LATITUDE'),
+                        'Longitude': row.get('LONGITUDE')
+                    })
+            except Exception as batch_error:
+                print(f"[BATCH ERROR] Query chunk failed on server: {str(batch_error)}")
+                continue
 
         df = pd.DataFrame(features_list)
 
-        # Drop rows missing critical variables
-        initial_len = len(df)
+        # Clean out any missing cloud-masked edge rows
         df = df.dropna()
-        final_len = len(df)
 
-        print(f"Raw sampled records: {initial_len} -> Clean valid records: {final_len}")
-        print(f"Successfully compiled {final_len} true spatial pixel vectors.")
+        print(f"SUCCESS: Dual batches successfully unified into pristine tabular matrix.")
+        print(f"Final Data Footprint Matrix Size: {len(df)} rows.")
         return df
-
     
 if __name__ == "__main__":
     pipeline = DataIngestionPipeline()

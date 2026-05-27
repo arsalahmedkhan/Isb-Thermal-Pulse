@@ -30,10 +30,11 @@ def run_pipeline():
     # 3. Handle tabular CSV cache
     raw_data_path = os.path.join(settings.RAW_DATA_DIR, 'islamabad_pixels.csv')
     if not os.path.exists(raw_data_path):
-        df = ingestor.sample_features_to_dataframe(feature_stack, roi, num_points=5000)
+        df = ingestor.sample_features_to_dataframe(feature_stack, roi, num_points=10000)
         df.to_csv(raw_data_path, index=False)
     else:
         print(f"Found existing local dataset at {raw_data_path}. Skipping cloud download.")
+
 
     # 4. Handle machine learning model training
     ml_engine = ThermalPredictorModel()
