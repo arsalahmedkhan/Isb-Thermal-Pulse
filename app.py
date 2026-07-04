@@ -1,8 +1,8 @@
 """
 Isb-Thermal-Pulse: Advanced Map Studio (Sector-Grid Core Matrix)
 Features dynamic city-wide sector selection, neighborhood spatial spillover
-thermodynamics, and stabilized map layers utilizing folium_static.
-"""
+thermodynamics, and stabilized map layers utilizing folium_static. - Fahad
+""" 
 
 import os
 import streamlit as st
